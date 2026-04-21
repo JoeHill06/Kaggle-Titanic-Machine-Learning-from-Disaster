@@ -2,7 +2,7 @@ import random
 import matplotlib.pyplot as plt
 from pprint import pformat
 import csv
-
+import torch
 
 class Object():
     def __init__(self, passengerID, Pclass=None, Name=None, Sex=None, Age=None, SibSp=None, Parch=None, 
