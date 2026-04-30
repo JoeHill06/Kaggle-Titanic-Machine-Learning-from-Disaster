@@ -3,60 +3,46 @@ from sklearn.metrics import accuracy_score
 
 
 class Model:
-    def __init__(self, n_estimators=200,max_depth=4,learning_rate=0.05,
-                 objective="binary:logistic",eval_metric="logloss",
-                 tree_method="hist",random_state=42):
-        
+    def __init__(self, n_estimators=5000, max_depth=4, learning_rate=0.01,
+                 objective="binary:logistic", eval_metric="logloss",
+                 tree_method="hist", random_state=42, early_stopping_rounds=50,
+                 subsample=0.8, colsample_bytree=0.8, min_child_weight=3,
+                 gamma=0.1, reg_alpha=0.1, reg_lambda=1.0):
+
         self.model = XGBClassifier(
-            n_estimators=200,
-            max_depth=4,
-            learning_rate=0.05,
-            objective="binary:logistic",
-            eval_metric="logloss",
-            tree_method="hist",
-            random_state=42
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            learning_rate=learning_rate,
+            objective=objective,
+            eval_metric=eval_metric,
+            tree_method=tree_method,
+            random_state=random_state,
+            early_stopping_rounds=early_stopping_rounds,
+            subsample=subsample,
+            colsample_bytree=colsample_bytree,
+            min_child_weight=min_child_weight,
+            gamma=gamma,
+            reg_alpha=reg_alpha,
+            reg_lambda=reg_lambda,
         )
 
-    def object_to_features(self, obj):
-        sex = 1 if obj.sex == "male" else 0 if obj.sex == "female" else -1
-        embarked_map = {"S": 0, "C": 1, "Q": 2}
-        embarked = embarked_map.get(obj.embarked, -1)
+    def train(self, x_train, y_train, x_val, y_val):
+        self.model.fit(
+            x_train,
+            y_train,
+            eval_set=[(x_val, y_val)],
+            verbose=False
+        )
 
-        return [
-            float(obj.p_class) if obj.p_class is not None else 0.0,
-            float(obj.age) if obj.age is not None else 0.0,
-            float(obj.sibsp) if obj.sibsp is not None else 0.0,
-            float(obj.parch) if obj.parch is not None else 0.0,
-            float(obj.fare) if obj.fare is not None else 0.0,
-            float(sex),
-            float(embarked),
-        ]
+    def predict(self, x):
+        return self.model.predict(x)
 
-    def build_training_data(self, passengers):
-        X = []
-        y = []
-
-        for p in passengers:
-            if p.survived is None:
-                continue
-
-            X.append(self.object_to_features(p))
-            y.append(int(p.survived))
-
-        return X, y
-
-    def train(self, passengers):
-        X, y = self.build_training_data(passengers)
-        self.model.fit(X, y)
-
-    def predict(self, passengers):
-        X = [self.object_to_features(p) for p in passengers]
-        return self.model.predict(X)
-
-    def score(self, passengers):
-        X, y = self.build_training_data(passengers)
-        preds = self.model.predict(X)
+    def score(self, x, y):
+        preds = self.model.predict(x)
         return accuracy_score(y, preds)
-    
+
+    def save(self, filename="titanic_model.json"):
+        self.model.save_model(filename)
+
     def load(self, filename="titanic_model.json"):
         self.model.load_model(filename)
