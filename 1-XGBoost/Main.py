@@ -5,7 +5,7 @@ import random
 # --- Create Dataset, Model
 dataset = Dataset()
 loaded = Model()
-loaded.load("titanic_model1.json")
+loaded.load("titanic_model.json")
 
 # --- Get Random Person ---
 #index = random.randrange(len(dataset.x_val))

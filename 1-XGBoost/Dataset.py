@@ -98,11 +98,15 @@ class Dataset:
 
         # --- For Age (impute missing with median age for same title) ---
         if age != "":
-            record.append(float(age))
+            age_val = float(age)
         elif age_medians:
-            record.append(age_medians.get(extracted_title, age_medians.get("Mr.", 28.0)))
+            age_val = age_medians.get(extracted_title, age_medians.get("Mr.", 28.0))
         else:
-            record.append(28.0)
+            age_val = 28.0
+        record.append(age_val)
+
+        # --- IsChild ---
+        record.append(1 if age_val < 12 else 0)
 
         # --- SibSp ---
         sibsp_val = int(SibSp) if SibSp != "" else 0
@@ -120,8 +124,12 @@ class Dataset:
         is_alone = 1 if family_size == 1 else 0
         record.append(is_alone)
 
-        # --- Fare ---
-        record.append(float(fare) if fare != "" else 0)
+        # --- Fare (log-transformed) ---
+        fare_val = float(fare) if fare != "" else 0.0
+        record.append(np.log1p(fare_val))
+
+        # --- FarePerPerson ---
+        record.append(np.log1p(fare_val / family_size))
 
         # --- Cabin / Deck ---
         deck_map = {
